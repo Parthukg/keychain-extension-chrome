@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cyber-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+    
+    <linearGradient id="metal-sheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#94a3b8" stop-opacity="0.5"/>
+    </linearGradient>
+
+    <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Main Key Body -->
+  <g filter="url(#neon-glow)">
+    <!-- Head (Tech Ring) -->
+    <path d="M176 128 C176 83.8 211.8 48 256 48 C300.2 48 336 83.8 336 128 C336 156.4 321.2 181.2 298.8 196 L298.8 360 L346.8 360 L346.8 408 L298.8 408 L298.8 464 L213.2 464 L213.2 196 C190.8 181.2 176 156.4 176 128 Z" 
+          fill="none" stroke="url(#cyber-gradient)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Inner Circuit Detail in Head -->
+    <circle cx="256" cy="128" r="32" fill="url(#cyber-gradient)" />
+    <path d="M256 160 L256 196" stroke="url(#cyber-gradient)" stroke-width="12" />
+    
+    <!-- Shaft Details -->
+    <path d="M256 240 L256 420" stroke="url(#cyber-gradient)" stroke-width="8" stroke-dasharray="20 10" opacity="0.6"/>
+  </g>
+
+  <!-- Highlighting/Sheen -->
+  <path d="M190 128 A 66 66 0 0 1 322 128" fill="none" stroke="url(#metal-sheen)" stroke-width="6" opacity="0.4" stroke-linecap="round"/>
+
+</svg>

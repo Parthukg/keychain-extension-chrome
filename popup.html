@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salesforce Credential Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <img src="icons/icon_premium_v2.svg" alt="Keychain" class="header-icon-img">
+        <div class="header-text">
+          <h1>Keychain</h1>
+          <span class="subtitle">Secure Access</span>
+        </div>
+      </div>
+      <button id="toggleFormBtn" class="add-btn" title="Add New Credential">+</button>
+    </header>
+
+    <section class="add-credential hidden" id="addCredentialSection">
+      <h2>Add New Credential</h2>
+      <form id="credentialForm">
+        <div class="form-group">
+          <label for="platform">Platform</label>
+          <select id="platform" required>
+            <option value="salesforce">Salesforce</option>
+            <option value="other" disabled>Other platforms (Coming Soon)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="environmentGroup">
+          <label for="environment">Environment</label>
+          <select id="environment">
+            <option value="production">Production</option>
+            <option value="sandbox">Sandbox</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="url">Login URL</label>
+          <input type="text" id="url" placeholder="login.salesforce.com" value="https://login.salesforce.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="user@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">💾 Save Credential</button>
+      </form>
+    </section>
+
+    <section id="credentialsSection">
+      <!-- Removed static h2, will be added dynamically -->
+      <div id="credentialsList" class="credentials-list">
+        <!-- Credentials will be added here -->
+      </div>
+    </section>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
