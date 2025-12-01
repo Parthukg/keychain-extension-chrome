@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Keychain - Credential Manager",
-  "version": "1.0.0",
+  "version": "3.0.7",
   "description": "Securely manage and auto-login to your accounts (Salesforce and more)",
   "permissions": [
     "storage",
@@ -13,6 +13,9 @@
     "*://*.salesforce.com/*",
     "*://*.force.com/*"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
   "background": {
     "service_worker": "background.js"
   },

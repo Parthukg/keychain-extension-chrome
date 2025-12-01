@@ -1,4 +1,42 @@
-console.log('🔐 Keychain Popup: Script loaded');
+// Security utilities
+const SecurityUtils = {
+  // HTML escape to prevent XSS
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  },
+
+  // Validate URL format
+  isValidUrl(urlString) {
+    try {
+      const url = new URL(urlString);
+      // Only allow https and http protocols
+      if (!['https:', 'http:'].includes(url.protocol)) {
+        return false;
+      }
+      // Prevent javascript: and data: URLs
+      if (urlString.toLowerCase().includes('javascript:') ||
+        urlString.toLowerCase().includes('data:')) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  // Validate input length
+  validateLength(value, maxLength) {
+    return value && value.length > 0 && value.length <= maxLength;
+  },
+
+  // Sanitize input by trimming and limiting length
+  sanitizeInput(value, maxLength = 255) {
+    if (!value) return '';
+    return value.trim().substring(0, maxLength);
+  }
+};
 
 // DOM Elements
 const credentialForm = document.getElementById('credentialForm');
@@ -35,12 +73,35 @@ document.addEventListener('DOMContentLoaded', loadCredentials);
 credentialForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  // Sanitize inputs
+  const url = SecurityUtils.sanitizeInput(urlInput.value, 2048);
+  const username = SecurityUtils.sanitizeInput(usernameInput.value, 255);
+  const password = passwordInput.value; // Don't trim passwords
+
+  // Validate URL
+  if (!SecurityUtils.isValidUrl(url)) {
+    showToast('❌ Invalid URL. Please use a valid https:// or http:// URL');
+    return;
+  }
+
+  // Validate username length
+  if (!SecurityUtils.validateLength(username, 255)) {
+    showToast('❌ Username must be between 1 and 255 characters');
+    return;
+  }
+
+  // Validate password length
+  if (!password || password.length === 0 || password.length > 1000) {
+    showToast('❌ Password must be between 1 and 1000 characters');
+    return;
+  }
+
   const credential = {
     id: Date.now().toString(),
     platform: platformSelect.value,
-    url: urlInput.value.trim(),
-    username: usernameInput.value.trim(),
-    password: passwordInput.value
+    url: url,
+    username: username,
+    password: password
   };
 
   await saveCredential(credential);
@@ -71,23 +132,50 @@ async function saveCredential(credential) {
 async function loadCredentials() {
   const { credentials = [] } = await chrome.storage.sync.get('credentials');
 
+  // Clear existing content
+  credentialsList.textContent = '';
+
   if (credentials.length === 0) {
-    credentialsList.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📭</div>
-        <p class="empty-text">No credentials saved yet!</p>
-        <p class="empty-subtext">Click the <span class="highlight">+</span> button above to add your first login.</p>
-      </div>
-    `;
+    const emptyState = document.createElement('div');
+    emptyState.className = 'empty-state';
+
+    const icon = document.createElement('div');
+    icon.className = 'empty-icon';
+    icon.textContent = '📭';
+
+    const text = document.createElement('p');
+    text.className = 'empty-text';
+    text.textContent = 'No credentials saved yet!';
+
+    const subtext = document.createElement('p');
+    subtext.className = 'empty-subtext';
+    subtext.textContent = 'Click the ';
+
+    const highlight = document.createElement('span');
+    highlight.className = 'highlight';
+    highlight.textContent = '+';
+
+    subtext.appendChild(highlight);
+    subtext.appendChild(document.createTextNode(' button above to add your first login.'));
+
+    emptyState.appendChild(icon);
+    emptyState.appendChild(text);
+    emptyState.appendChild(subtext);
+    credentialsList.appendChild(emptyState);
     return;
   }
 
-  // Add header and list
-  const listHtml = credentials.map(cred => createCredentialCard(cred)).join('');
-  credentialsList.innerHTML = `
-    <h2 class="list-title">Saved Credentials</h2>
-    ${listHtml}
-  `;
+  // Add header
+  const title = document.createElement('h2');
+  title.className = 'list-title';
+  title.textContent = 'Saved Credentials';
+  credentialsList.appendChild(title);
+
+  // Add credential cards
+  credentials.forEach(cred => {
+    const card = createCredentialCard(cred);
+    credentialsList.appendChild(card);
+  });
 
   // Attach event listeners to buttons
   attachEventListeners();
@@ -105,34 +193,79 @@ function getPlatformIcon(platform) {
   return icons[platform] || icons.default;
 }
 
-// Create credential card HTML
+// Create credential card DOM element (safe from XSS)
 function createCredentialCard(credential) {
   const maskedPassword = '•'.repeat(12);
   const urlDisplay = credential.url.replace(/^https?:\/\//, '');
   const platformIcon = getPlatformIcon(credential.platform || 'salesforce');
-  const platformName = credential.platform ? credential.platform.charAt(0).toUpperCase() + credential.platform.slice(1) : 'Salesforce';
+  const platformName = credential.platform ?
+    credential.platform.charAt(0).toUpperCase() + credential.platform.slice(1) :
+    'Salesforce';
 
-  return `
-    <div class="credential-item" data-id="${credential.id}" data-platform="${credential.platform || 'salesforce'}">
-      <div class="credential-header">
-        <span class="credential-icon">${platformIcon}</span>
-        <div class="credential-info">
-          <div class="credential-platform">${platformName}</div>
-          <div class="credential-url">${urlDisplay}</div>
-          <div class="credential-username">${credential.username}</div>
-        </div>
-      </div>
-      <div class="credential-password">${maskedPassword}</div>
-      <div class="credential-actions">
-        <button class="btn btn-small btn-login" data-action="login">
-          🚀 Login
-        </button>
-        <button class="btn btn-small btn-delete" data-action="delete">
-          🗑️ Delete
-        </button>
-      </div>
-    </div>
-  `;
+  // Create main container
+  const item = document.createElement('div');
+  item.className = 'credential-item';
+  item.dataset.id = credential.id;
+  item.dataset.platform = credential.platform || 'salesforce';
+
+  // Create header
+  const header = document.createElement('div');
+  header.className = 'credential-header';
+
+  const icon = document.createElement('span');
+  icon.className = 'credential-icon';
+  icon.textContent = platformIcon;
+
+  const info = document.createElement('div');
+  info.className = 'credential-info';
+
+  const platform = document.createElement('div');
+  platform.className = 'credential-platform';
+  platform.textContent = platformName;
+
+  const url = document.createElement('div');
+  url.className = 'credential-url';
+  url.textContent = urlDisplay;
+
+  const username = document.createElement('div');
+  username.className = 'credential-username';
+  username.textContent = credential.username; // Safe - textContent auto-escapes
+
+  info.appendChild(platform);
+  info.appendChild(url);
+  info.appendChild(username);
+
+  header.appendChild(icon);
+  header.appendChild(info);
+
+  // Create password display
+  const password = document.createElement('div');
+  password.className = 'credential-password';
+  password.textContent = maskedPassword;
+
+  // Create actions
+  const actions = document.createElement('div');
+  actions.className = 'credential-actions';
+
+  const loginBtn = document.createElement('button');
+  loginBtn.className = 'btn btn-small btn-login';
+  loginBtn.dataset.action = 'login';
+  loginBtn.textContent = '🚀 Login';
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'btn btn-small btn-delete';
+  deleteBtn.dataset.action = 'delete';
+  deleteBtn.textContent = '🗑️ Delete';
+
+  actions.appendChild(loginBtn);
+  actions.appendChild(deleteBtn);
+
+  // Assemble card
+  item.appendChild(header);
+  item.appendChild(password);
+  item.appendChild(actions);
+
+  return item;
 }
 
 // Attach event listeners to credential action buttons
@@ -168,14 +301,10 @@ async function handleLogin(credentialId) {
     return;
   }
 
-  console.log('Keychain Popup: Sending login request to background worker');
-
   // Send login request to background service worker
   chrome.runtime.sendMessage({
     action: 'performLogin',
     credential: credential
-  }, (response) => {
-    console.log('Keychain Popup: Background worker response:', response);
   });
 
   showToast('🚀 Opening Salesforce...');
